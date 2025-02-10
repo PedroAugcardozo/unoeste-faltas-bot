@@ -4,7 +4,13 @@ require('dotenv').config();
 
 async function Robo() {
     // - abre a pagina do aprender
-    const browser = await puppeteer.launch({headless: false})
+    const browser = await puppeteer.launch({
+        headless: false,
+        defaultViewport: {
+            width: 1920,
+            height: 1080
+        }
+    })
     const page = await browser.newPage();
     const url = `https://www.unoeste.br/site/ava/`
     await page.goto(url)
@@ -24,7 +30,12 @@ async function Robo() {
     await page.click('.infacad')
 
     // - entra na pagina de faltas e notas
-    await page.waitForSelector('.divIconeServicos')
-    await page.click('.divIconeServicos')
+    await page.waitForSelector('[href="https://www.unoeste.br/site/consnota/aluno/ConsultaNota.aspx"]')
+    await page.click('[href="https://www.unoeste.br/site/consnota/aluno/ConsultaNota.aspx"]')
+
+    // - entra em faltas
+    await page.waitForSelector('.linkNoHT')
+    await page.click('.linkNoHT')
+
 }
 Robo()
