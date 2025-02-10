@@ -17,11 +17,14 @@ async function Robo() {
     await page.type('[name="tbLogin"]', RA)
     await page.type('[name="tbSenha"]', Senha)
     await page.click('[type="submit"]')
+    console.log('aprender acessado')
+
+    // - entra na area do aluno
     await page.waitForSelector('.infacad')
     await page.click('.infacad')
+
+    // - entra na pagina de faltas e notas
     await page.waitForSelector('.divIconeServicos')
     await page.click('.divIconeServicos')
-    console.log('aprender acessado')
 }
-
 Robo()
