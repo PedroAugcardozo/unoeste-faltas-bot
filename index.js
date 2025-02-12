@@ -2,8 +2,11 @@ const puppeteer = require('puppeteer')
 const readLineSync = require('readline-sync')
 require('dotenv').config();
 
+
+//? quando está pronto
+//! quando pode ser que tenha uma alteração no futuro
 async function Robo() {
-    // - abre a pagina do aprender
+    //? - abre a pagina do aprender
     const browser = await puppeteer.launch({
         headless: true,
         defaultViewport: {
@@ -16,61 +19,70 @@ async function Robo() {
     await page.goto(url)
     console.log('abriu o navegador')
 
-    // - pega o RA e a senha do usuario
+    //? - pega o RA e a senha do usuario
     const RA = process.env.RA_KEY
     const Senha = process.env.PASS
 
-    // - digita e cadastra o RA e a senha do usuario e entra no aprender 
+    //? - digita e cadastra o RA e a senha do usuario e entra no aprender 
     await page.type('[name="tbLogin"]', RA)
     await page.type('[name="tbSenha"]', Senha)
     await page.click('[type="submit"]')
     console.log('aprender acessado')
 
-    // - entra na area do aluno
+    //? - entra na area do aluno
     await page.waitForSelector('.infacad')
     await page.click('.infacad')
     console.log('area do aluno acessada')
 
-    // - entra na pagina de faltas e notas
+    //? - entra na pagina de faltas e notas
     await page.waitForSelector('[href="https://www.unoeste.br/site/consnota/aluno/ConsultaNota.aspx"]')
     await page.click('[href="https://www.unoeste.br/site/consnota/aluno/ConsultaNota.aspx"]')
 
-    // - entra em faltas
+    //? - entra em faltas
     await page.waitForSelector('[data-index="1"]')
     await page.click('[data-index="1"]')
     console.log('area de faltas acessada')
 
-    //pega as materias
+    //! pega as materias
 
     await page.waitForSelector('table', { timeout: 5000 }); // Espera até 5 segundos
 
-    let dados = await page.$$eval('table tr', linhas => {
+    const dados = await page.$$eval('table tr', linhas => {
         return linhas
             .filter(linha => {
                 // Filtra linhas que têm pelo menos uma coluna com dados
-                const colunas = linha.querySelectorAll('td.center span');
-                return colunas.length > 0;
+                const materia = linha.getAttribute('data-disnome')?.trim();
+                return materia; // Filtra apenas linhas com nome da disciplina
             })
             .map(linha => {
                 const materia = linha.getAttribute('data-disnome')?.trim() || '';
-                
-                const colunas = linha.querySelectorAll('td.center span');
-                const faltas = colunas.length > 0 ? colunas[colunas.length - 1].innerText.trim() : '';
     
-                // Verifica se a string de faltas é um número ou uma porcentagem
-                const isPercentage = /^\d{1,3}%$/.test(faltas);
+                // Seleciona os elementos pelos IDs
+                const presencial = linha.querySelector('span[id^="ContentPlaceHolder_gyFaltas_lbPresencial_"]')?.innerText.trim() || '0';
+                const naoPresencial = linha.querySelector('span[id^="ContentPlaceHolder_gyFaltas_lbNPresencial_"]')?.innerText.trim() || '0';
+                const chPrevista = linha.querySelector('span[id^="ContentPlaceHolder_gyFaltas_lbChPrevista_"]')?.innerText.trim() || '0';
+    
+                // Converte os valores para números
+                const presencialNum = parseInt(presencial, 10);
+                const naoPresencialNum = parseInt(naoPresencial, 10);
+                const chPrevistaNum = parseInt(chPrevista, 10);
+    
+                // Calcula a porcentagem de faltas
+                const totalFaltas = presencialNum + naoPresencialNum;
+                const percFaltas = chPrevistaNum > 0 ? ((totalFaltas / chPrevistaNum) * 100) : 0;
     
                 return { 
                     disciplina: materia, 
-                    perc_faltas: isPercentage ? faltas : 'CURSANDO' 
+                    perc_faltas: `${percFaltas.toFixed(2)}%` // Retorna a porcentagem formatada
                 };
             });
     });
     // Convertendo os dados filtrados de volta para um array
     dados = Array.from(dados.values());
-
     console.log(dados)
-
     browser.close
+
+    //! vou tentar usar isso aqui para mandar os dados para o front-end
+    return dados;
 }
 Robo()
