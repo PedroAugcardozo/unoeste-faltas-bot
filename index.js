@@ -43,11 +43,11 @@ async function Robo() {
     await page.click('[data-index="1"]')
     console.log('area de faltas acessada')
 
-    //! pega as materias
+    //!pega as materias
 
     await page.waitForSelector('table', { timeout: 5000 }); // Espera até 5 segundos
 
-    const dados = await page.$$eval('table tr', linhas => {
+    let dados = await page.$$eval('table tr', linhas => {
         return linhas
             .filter(linha => {
                 // Filtra linhas que têm pelo menos uma coluna com dados
@@ -85,4 +85,5 @@ async function Robo() {
     //! vou tentar usar isso aqui para mandar os dados para o front-end
     return dados;
 }
-Robo()
+
+module.exports = Robo;
