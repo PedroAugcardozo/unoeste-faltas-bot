@@ -5,6 +5,7 @@ require('dotenv').config();
 
 //? quando está pronto
 //! quando pode ser que tenha uma alteração no futuro
+
 async function Robo() {
     //? - abre a pagina do aprender
     const browser = await puppeteer.launch({
@@ -73,17 +74,19 @@ async function Robo() {
     
                 return { 
                     disciplina: materia, 
-                    perc_faltas: `${percFaltas.toFixed(2)}%` // Retorna a porcentagem formatada
+                    perc_faltas: `${percFaltas.toFixed(2)}%`, // Retorna a porcentagem formatada
+                    CargaHoraria: presencialNum
                 };
             });
     });
     // Convertendo os dados filtrados de volta para um array
     dados = Array.from(dados.values());
     console.log(dados)
-    browser.close
+    browser.close()
 
     //! vou tentar usar isso aqui para mandar os dados para o front-end
     return dados;
 }
+Robo()
 
 module.exports = Robo;

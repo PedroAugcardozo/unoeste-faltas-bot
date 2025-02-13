@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const scraper = require('./scraper');
+const robo = require('./scraper');
 
 let mainWindow;
 
@@ -13,11 +13,11 @@ app.whenReady().then(() => {
             contextIsolation: false,
         },
     });
-
+    console.log('aqui roda')
     mainWindow.loadFile('src/index.html');
 });
 
 ipcMain.handle('run-scraper', async () => {
-    const data = await scraper();
+    const data = await robo();
     return data;
 });
