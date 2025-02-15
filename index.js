@@ -49,36 +49,37 @@ async function Robo() {
     await page.waitForSelector('table', { timeout: 5000 }); // Espera até 5 segundos
 
     let dados = await page.$$eval('table tr', linhas => {
-        return linhas
-            .filter(linha => {
-                // Filtra linhas que têm pelo menos uma coluna com dados
-                const materia = linha.getAttribute('data-disnome')?.trim();
-                return materia; // Filtra apenas linhas com nome da disciplina
-            })
-            .map(linha => {
-                const materia = linha.getAttribute('data-disnome')?.trim() || '';
+        return linhas.map(linha => {
+            const materia = linha.getAttribute('data-disnome')?.trim();
+            if (!materia) return null; // Ignora linhas sem nome de disciplina
     
-                // Seleciona os elementos pelos IDs
-                const presencial = linha.querySelector('span[id^="ContentPlaceHolder_gyFaltas_lbPresencial_"]')?.innerText.trim() || '0';
-                const naoPresencial = linha.querySelector('span[id^="ContentPlaceHolder_gyFaltas_lbNPresencial_"]')?.innerText.trim() || '0';
-                const chPrevista = linha.querySelector('span[id^="ContentPlaceHolder_gyFaltas_lbChPrevista_"]')?.innerText.trim() || '0';
+            const getSpanText = idPrefix =>
+                linha.querySelector(`span[id^="${idPrefix}"]`)?.innerText.trim() || '0';
     
-                // Converte os valores para números
-                const presencialNum = parseInt(presencial, 10);
-                const naoPresencialNum = parseInt(naoPresencial, 10);
-                const chPrevistaNum = parseInt(chPrevista, 10);
+            const presencialNum = parseInt(getSpanText('ContentPlaceHolder_gyFaltas_lbPresencial_'), 10);
+            const naoPresencialNum = parseInt(getSpanText('ContentPlaceHolder_gyFaltas_lbNPresencial_'), 10);
+            const chPrevistaNum = parseInt(getSpanText('ContentPlaceHolder_gvFaltas_lbChPrevista_'), 10);
     
-                // Calcula a porcentagem de faltas
-                const totalFaltas = presencialNum + naoPresencialNum;
-                const percFaltas = chPrevistaNum > 0 ? ((totalFaltas / chPrevistaNum) * 100) : 0;
+            if (chPrevistaNum === 0) return null; // Remove disciplinas sem carga horária prevista
     
-                return { 
-                    disciplina: materia, 
-                    perc_faltas: `${percFaltas.toFixed(2)}%`, // Retorna a porcentagem formatada
-                    CargaHoraria: presencialNum
+            const totalFaltas = presencialNum + naoPresencialNum;
+            const percFaltas = chPrevistaNum > 0 ? ((totalFaltas / chPrevistaNum) * 100).toFixed(2) + "%" : "0%";
+            //calcula quantas faltas ainda tenho
+            const faltasPermitidas = (chPrevistaNum * 25) / 100
+            const horasDeFalta = presencialNum + naoPresencialNum
+            const horasRestantes = faltasPermitidas - horasDeFalta
+            const blocosRestantes = horasRestantes / 1.5
+    
+            return{ 
+                    disciplina: materia,
+                    perc_faltas: percFaltas,
+                    cargaHoraria: chPrevistaNum, 
+                    FaltasPermitidas: blocosRestantes 
                 };
-            });
+        }).filter(Boolean); // Remove elementos nulos
     });
+    
+    
     // Convertendo os dados filtrados de volta para um array
     dados = Array.from(dados.values());
     console.log(dados)
